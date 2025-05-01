@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  user_id    Int       @id @default(autoincrement())
+  username   String?
+  email      String    @unique
+  password   String
+  createdAt  DateTime  @default(now())
+
+  profile    Profile?
+  roles      Role[]    @relation("UserRoles")
+  tasks      Task[]    @relation("UserTasks")
+  workLogs   WorkLog[] @relation("UserWorkLogs")
+  projects   Project[] @relation("CreatedProjects")
+}
+
+model Profile {
+  profile_id Int    @id @default(autoincrement())
+  fullName   String
+  avatar     String?
+  bio        String?
+
+  userId     Int     @unique
+  user       User    @relation(fields: [userId], references: [user_id])
+}
+
+model Role {
+  role_id    Int     @id @default(autoincrement())
+  role_name  String
+
+  users      User[]  @relation("UserRoles")
+  createdAt  DateTime @default(now())
+  createdBy  String
+  updateAt   DateTime
+  updateBy   String
+}
+
+model Task {
+  task_id     Int      @id @default(autoincrement())
+  title       String
+  description String
+  status      String
+  assigneeId  Int
+  image       String
+  priority    String
+  datetime    DateTime @default(now())
+  createdAt   DateTime @default(now())
+  createdBy   String
+  updateAt    DateTime @default(now())
+  updateBy    String
+
+  assignee    User     @relation("UserTasks", fields: [assigneeId], references: [user_id])
+}
+
+model Project {
+  project_id   Int      @id @default(autoincrement())
+  project_name String
+  createdAt    DateTime @default(now())
+  createdById  Int
+  updateAt     DateTime @default(now())
+  updateBy     String
+
+  createdBy    User     @relation("CreatedProjects", fields: [createdById], references: [user_id])
+}
+
+model WorkLog {
+  worklog_id   Int      @id @default(autoincrement())
+  title        String
+  description  String
+  startDate    DateTime
+  endDate      DateTime
+  status       String
+  date         DateTime
+  comment      String
+  userId       Int
+
+  user         User     @relation("UserWorkLogs", fields: [userId], references: [user_id])
+}
+
+model Product {
+  id           Int      @id @default(autoincrement())
+  name         String 
+  price        Int
+  description  String
+  image        String
+}
