@@ -6,9 +6,6 @@ export const getAllTasks = async () => {
 
 export const getTaskById = async (taskId) => {
     const task = await findTaskById(taskId);
-    if (!task) {
-        throw new Error('Task not found');
-    }
     return task;
 }
 
@@ -18,9 +15,6 @@ export const createNewTask = async (taskData) => {
 
 export const deleteTaskById = async (taskId) => {
     const task = await deleteTask(taskId);
-    if (!task) {
-        throw new Error('Task not found');
-    }
     return task;
 }
 

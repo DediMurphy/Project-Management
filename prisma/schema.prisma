@@ -19,6 +19,8 @@ model User {
   tasks      Task[]    @relation("UserTasks")
   workLogs   WorkLog[] @relation("UserWorkLogs")
   projects   Project[] @relation("CreatedProjects")
+  attendances     Attendance[]
+  leaveRequests  LeaveRequest[]
 }
 
 model Profile {
@@ -90,4 +92,43 @@ model Product {
   price        Int
   description  String
   image        String
+}
+
+model Attendance {
+  attendance_id Int      @id @default(autoincrement())
+  userId        Int
+  date          DateTime @default(now())
+  checkIn       DateTime?
+  checkOut      DateTime?
+  status        String   // Present, Late, Absent, Leave
+  note          String?
+
+  metaId        Int
+  meta          MetaAttendance @relation(fields: [metaId], references: [meta_id])
+  user          User           @relation(fields: [userId], references: [user_id])
+}
+
+model MetaAttendance {
+  meta_id      Int      @id @default(autoincrement())
+  name         String   // "Default", "Shift Pagi", dst
+  startTime    DateTime // Jam masuk resmi
+  endTime      DateTime // Jam keluar resmi
+  lateTolerance Int     // Menit toleransi keterlambatan
+
+  description  String?
+
+  attendances  Attendance[]
+}
+
+model LeaveRequest {
+  leave_id     Int      @id @default(autoincrement())
+  userId       Int
+  type         String   // "Sick", "Permission", "Leave"
+  startDate    DateTime
+  endDate      DateTime
+  reason       String
+  status       String   // Pending, Approved, Rejected
+  submittedAt  DateTime @default(now())
+
+  user         User     @relation(fields: [userId], references: [user_id])
 }

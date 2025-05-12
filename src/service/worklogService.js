@@ -1,4 +1,4 @@
-import { createLog, deleteLog, findAllLog, findLogByUser, updateLog } from "../repository/worklogRepository";
+import { createLog, deleteLog, findAllLog, findLogByUser, updateLog } from "../repository/worklogRepository.js";
 
 export const getAllWorkLog = async () => {
     return await findAllLog();
@@ -6,11 +6,6 @@ export const getAllWorkLog = async () => {
 
 export const getWorkLogByUser = async (logId) => {
     const log = await findLogByUser(logId);
-
-    if (!log) {
-        throw new Error('Task not found');
-    }
-    
     return log;
 }
 
@@ -26,8 +21,11 @@ export const editWorkLog = async (logId, logData) => {
 
 export const removeWorkLog = async (logId) => {
     await getWorkLogByUser(logId);
-
-    return await deleteLog(logId);
+    const worklog = await deleteLog(logId);
+    if (!worklog) {
+        throw new Error('Task not found');
+    }
+    return worklog
 }
 
 

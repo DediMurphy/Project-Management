@@ -1,4 +1,4 @@
-import { sendResponse } from '../middlewares/responseFormatter.js';
+import sendResponse from '../middlewares/responseFormatter.js';
 import * as taskService from '../service/taskService.js';
 
 export const getAllTasks = async (req, res, next) => {
@@ -61,7 +61,7 @@ export const updateTask = async (req, res, next) => {
     }
 };
 
-export const deleteTask = async (req, res) => {
+export const deleteTask = async (req, res, next) => {
     try {
         const id = parseInt(req.params.id);
         const task = await taskService.deleteTaskById(id);

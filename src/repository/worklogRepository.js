@@ -1,4 +1,4 @@
-import prisma from "../db";
+import prisma from "../db/index.js";
 
 export const findAllLog = async () => {
     return await prisma.workLog.findMany();
@@ -21,7 +21,8 @@ export const createLog = async (newLog) => {
             endDate: newLog.endDate,
             status: newLog.status,
             date: newLog.date,
-            comment: newLog.comment
+            comment: newLog.comment,
+            userId: newLog.userId
         }
     })
 }
@@ -32,13 +33,13 @@ export const updateLog = async (logId, updateLog) => {
             worklog_id: logId,
         },
         data: {
-            title: newLog.title,
-            description: newLog.description,
-            startDate: newLog.startDate,
-            endDate: newLog.endDate,
-            status: newLog.status,
-            date: newLog.date,
-            comment: newLog.comment
+            title: updateLog.title,
+            description: updateLog.description,
+            startDate: updateLog.startDate,
+            endDate: updateLog.endDate,
+            status: updateLog.status,
+            date: updateLog.date,
+            comment: updateLog.comment,
         }
     })
 }
