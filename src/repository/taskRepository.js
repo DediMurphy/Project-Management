@@ -23,16 +23,15 @@ export const createTask = async (newTask) => {
         priority: newTask.priority,
         datetime: newTask.datetime ? new Date(newTask.datetime) : new Date(),
         createdBy: newTask.createdBy,
-        updateBy: newTask.updateBy
+        updateBy: newTask.updateBy,
+        projectId: newTask.projectId,
       }
     });
   };
 
 export const updateTask = async (taskId, updatedTask) => {
     return await prisma.task.update({
-        where: {
-            task_id: taskId,
-        },
+        where: {task_id: taskId,},
         data: {
             title: updatedTask.title,
             description: updatedTask.description,
@@ -49,4 +48,15 @@ export const deleteTask = async (taskId) => {
             task_id: taskId,
         }
     });
+};
+
+export const findTasksByProjectId = async (projectId) => {
+  return await prisma.task.findMany({
+    where: {
+      projectId: projectId,
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
 };

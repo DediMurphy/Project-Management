@@ -8,40 +8,42 @@ datasource db {
 }
 
 model User {
-  user_id    Int       @id @default(autoincrement())
-  username   String?
-  email      String    @unique
-  password   String
-  createdAt  DateTime  @default(now())
+  user_id   Int      @id @default(autoincrement())
+  username  String?
+  email     String   @unique
+  password  String
+  roleId    Int?
+  role      Role?    @relation(fields: [roleId], references: [role_id])
+  createdAt DateTime @default(now())
 
-  profile    Profile?
-  roles      Role[]    @relation("UserRoles")
-  tasks      Task[]    @relation("UserTasks")
-  workLogs   WorkLog[] @relation("UserWorkLogs")
-  projects   Project[] @relation("CreatedProjects")
-  attendances     Attendance[]
-  leaveRequests  LeaveRequest[]
+  profile       Profile?
+  workLogs      WorkLog[]      @relation("UserWorkLogs")
+  projects      Project[]      @relation("CreatedProjects")
+  attendances   Attendance[]
+  leaveRequests LeaveRequest[]
+  tasks         Task[]         @relation("UserTasks")
+  createdTasks  Task[]         @relation("TaskCreatedBy")
+  updatedTasks  Task[]         @relation("TaskUpdatedBy")
+}
+
+model Role {
+  role_id   Int      @id @default(autoincrement())
+  role_name String   @unique
+  users     User[]
+  createdAt DateTime @default(now())
+  createdBy String
+  updateAt  DateTime
+  updateBy  String
 }
 
 model Profile {
-  profile_id Int    @id @default(autoincrement())
+  profile_id Int     @id @default(autoincrement())
   fullName   String
   avatar     String?
   bio        String?
 
-  userId     Int     @unique
-  user       User    @relation(fields: [userId], references: [user_id])
-}
-
-model Role {
-  role_id    Int     @id @default(autoincrement())
-  role_name  String
-
-  users      User[]  @relation("UserRoles")
-  createdAt  DateTime @default(now())
-  createdBy  String
-  updateAt   DateTime
-  updateBy   String
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [user_id])
 }
 
 model Task {
@@ -54,11 +56,16 @@ model Task {
   priority    String
   datetime    DateTime @default(now())
   createdAt   DateTime @default(now())
-  createdBy   String
+  createdBy   Int // Ganti ke Int
   updateAt    DateTime @default(now())
-  updateBy    String
+  updateBy    Int // Ganti ke Int
 
-  assignee    User     @relation("UserTasks", fields: [assigneeId], references: [user_id])
+  projectId Int?
+  project   Project? @relation("ProjectTasks", fields: [projectId], references: [project_id])
+
+  assignee User @relation("UserTasks", fields: [assigneeId], references: [user_id])
+  creator  User @relation("TaskCreatedBy", fields: [createdBy], references: [user_id])
+  updater  User @relation("TaskUpdatedBy", fields: [updateBy], references: [user_id])
 }
 
 model Project {
@@ -69,66 +76,67 @@ model Project {
   updateAt     DateTime @default(now())
   updateBy     String
 
-  createdBy    User     @relation("CreatedProjects", fields: [createdById], references: [user_id])
+  createdBy User   @relation("CreatedProjects", fields: [createdById], references: [user_id])
+  tasks     Task[] @relation("ProjectTasks")
 }
 
 model WorkLog {
-  worklog_id   Int      @id @default(autoincrement())
-  title        String
-  description  String
-  startDate    DateTime
-  endDate      DateTime
-  status       String
-  date         DateTime
-  comment      String
-  userId       Int
+  worklog_id  Int      @id @default(autoincrement())
+  title       String
+  description String
+  startTime   String
+  endTime     String
+  status      String
+  date        DateTime @db.Date
+  comment     String
+  userId      Int
 
-  user         User     @relation("UserWorkLogs", fields: [userId], references: [user_id])
+  user User @relation("UserWorkLogs", fields: [userId], references: [user_id])
 }
 
 model Product {
-  id           Int      @id @default(autoincrement())
-  name         String 
-  price        Int
-  description  String
-  image        String
+  id          Int    @id @default(autoincrement())
+  name        String
+  price       Int
+  description String
+  image       String
 }
 
 model Attendance {
-  attendance_id Int      @id @default(autoincrement())
+  attendance_id Int       @id @default(autoincrement())
   userId        Int
-  date          DateTime @default(now())
+  date          DateTime  @default(now())
   checkIn       DateTime?
   checkOut      DateTime?
-  status        String   // Present, Late, Absent, Leave
+  status        String // Present, Late, Absent, Leave
   note          String?
 
-  metaId        Int
-  meta          MetaAttendance @relation(fields: [metaId], references: [meta_id])
-  user          User           @relation(fields: [userId], references: [user_id])
+  metaId Int
+  meta   MetaAttendance @relation(fields: [metaId], references: [meta_id])
+  user   User           @relation(fields: [userId], references: [user_id])
 }
 
 model MetaAttendance {
-  meta_id      Int      @id @default(autoincrement())
-  name         String   // "Default", "Shift Pagi", dst
-  startTime    DateTime // Jam masuk resmi
-  endTime      DateTime // Jam keluar resmi
-  lateTolerance Int     // Menit toleransi keterlambatan
+  meta_id       Int      @id @default(autoincrement())
+  name          String // "Default", "Shift Pagi", dst
+  startTime     DateTime // Jam masuk resmi
+  endTime       DateTime // Jam keluar resmi
+  lateTolerance Int // Menit toleransi keterlambatan
 
-  description  String?
+  description String?
 
-  attendances  Attendance[]
+  attendances Attendance[]
 }
 
 model LeaveRequest {
-  leave_id     Int      @id @default(autoincrement())
-  userId       Int
-  type         String   // "Sick", "Permission", "Leave"
-  startDate    DateTime
-  endDate      DateTime
-  reason       String
-  status       String   // Pending, Approved, Rejected
-  submittedAt  DateTime @default(now())
+  leave_id    Int      @id @default(autoincrement())
+  userId      Int
+  type        String // "Sick", "Permission", "Leave"
+  startDate   DateTime
+  endDate     DateTime
+  reason      String
+  status      String // Pending, Approved, Rejected
+  submittedAt DateTime @default(now())
 
-  user         User     @relation(fields: [userId], references: [user_id])
+  user User @relation(fields: [userId], references: [user_id])
 }

@@ -1,4 +1,4 @@
-import { findTaskById, createTask, findTask, deleteTask, updateTask } from "../repository/taskRepository.js";
+import { findTaskById,findTasksByProjectId, createTask, findTask, deleteTask, updateTask } from "../repository/taskRepository.js";
 
 export const getAllTasks = async () => {
     return await findTask();
@@ -22,3 +22,7 @@ export const updateTaskById = async (taskId, taskData) => {
     await getTaskById(taskId);
     return await updateTask(taskId, taskData);
 }
+
+export const getTasksByProjectId = async (projectId) => {
+  return await findTasksByProjectId(projectId);
+};

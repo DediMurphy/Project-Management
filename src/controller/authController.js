@@ -5,7 +5,7 @@ import { signAccessToken, signRefreshToken, signToken, verifyRefreshToken } from
 
 export const register = async (req, res, next) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, roleId } = req.body;
     const existUser = await prisma.user.findUnique({ where: { email } });
 
     if (existUser) {
@@ -19,6 +19,7 @@ export const register = async (req, res, next) => {
         username,
         email,
         password: hashedPassword,
+        roleId
       },
     });
 
@@ -27,6 +28,7 @@ export const register = async (req, res, next) => {
       message: "User registered successfully",
       data: {
         user_id: user.user_id,
+        username: user.username,
         email: user.email,
       },
     });
@@ -39,7 +41,11 @@ export const login = async (req, res, next) => {
   try {
     const { username, password } = req.body;
 
-    const user = await prisma.user.findFirst({ where: { username } });
+    const user = await prisma.user.findFirst({
+      where: { username },
+      include: { role: true },
+    });
+
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
@@ -49,14 +55,21 @@ export const login = async (req, res, next) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    const accessToken = signAccessToken({user_id: user.user_id});
-    const refreshToken = signRefreshToken({user_id: user.user_id});
+    const accessToken = signAccessToken({
+      user_id: user.user_id,
+      role: user.role.role_name,
+    });
+
+    const refreshToken = signRefreshToken({
+      user_id: user.user_id,
+      role: user.role.role_name,
+    });
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      maxAge: 24 * 60 * 60 * 1000,
     });
 
     sendResponse(res, {
@@ -67,6 +80,7 @@ export const login = async (req, res, next) => {
         user: {
           user_id: user.user_id,
           email: user.email,
+          role: user.role.role_name,
         },
       },
     });
@@ -84,7 +98,10 @@ export const refreshAccessToken = async (req, res, next) => {
     }
 
     const decode = verifyRefreshToken(token);
-    const accessToken = signAccessToken({user_id: decode.user_id});
+    const accessToken = signAccessToken({
+      user_id: decode.user_id,
+      role: decode.role,
+    });
 
     sendResponse(res, {
       statusCode: 200,
@@ -95,80 +112,11 @@ export const refreshAccessToken = async (req, res, next) => {
     res.status(403);
     next(error);
   }
-}
-
-export const getUser = async (req, res, next) => {
-  try {
-    // Jika ingin mendapatkan semua user, pastikan data sensitif tidak dikembalikan
-    const users = await prisma.user.findMany({
-      select: {
-        user_id: true,
-        username: true,
-        email: true,
-        createdAt: true,
-        updatedAt: true,
-        // password tidak diikutsertakan
-      }
-    });
-
-    sendResponse(res, {
-      statusCode: 200,
-      message: "Users retrieved successfully",
-      data: users,
-    }); 
-  } catch (error) {
-    // Pastikan error dilewatkan ke middleware error handler
-    next(error);
-  }
-};
-
-export const getCurrentUser = async (req, res, next) => {
-  try {
-    // Mengambil data user dari token yang sudah di-decode di middleware auth
-    const userId = req.user.user_id;
-    
-    const user = await prisma.user.findUnique({
-      where: { user_id: userId },
-      select: {
-        user_id: true,
-        username: true,
-        email: true,
-        createdAt: true,
-        updatedAt: true,
-      }
-    });
-    
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    
-    sendResponse(res, {
-      statusCode: 200,
-      message: "User profile retrieved successfully",
-      data: user,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const protectedRoute = (req, res, next) => {
-  try {
-    sendResponse(res, {
-      statusCode: 200,
-      message: "Welcome to protected route",
-      data: req.user,
-    });
-  } catch (err) {
-    next(err);
-  }
 };
 
 export const logout = (req, res, next) => {
   try {
-    // Hapus refresh token cookie
     res.clearCookie("refreshToken");
-    
     sendResponse(res, {
       statusCode: 200,
       message: "Logged out successfully",

@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "WorkLog" ALTER COLUMN "date" SET DATA TYPE DATE;
